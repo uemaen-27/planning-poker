@@ -1,0 +1,63 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Startseite{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-center align-items-center" style="height: 100vh;">
+        <div class="card shadow-lg p-4" style="width: 400px;">
+            <h2 class="card-title text-center mb-4">Planning Poker</h2>
+
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger">
+                    {{ message }}
+                </div>
+            {% endfor %}
+
+            {{ form_start(form) }}
+                <div class="mb-3">
+                    {{ form_label(form.username, 'Dein Username') }}
+                    {{ form_widget(form.username, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.username) }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form_label(form.sessionCode, 'Session Code (optional)') }}
+                    {{ form_widget(form.sessionCode, {'attr': {'class': 'form-control', 'id': 'session_code'}}) }}
+                    {{ form_errors(form.sessionCode) }}
+                </div>
+
+               {# <div class="mb-3" id="revealModeContainer">
+                    <div class="form-check">
+                        {{ form_widget(form.revealMode, {'attr': {'class': 'form-check-input'}}) }}
+                        {{ form_label(form.revealMode, 'Karten sofort aufdecken', {'label_attr': {'class': 'form-check-label'}}) }}
+                        {{ form_errors(form.revealMode) }}
+                    </div>
+                </div> #}
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary" id="submit_button">
+                        Neue Session Starten
+                    </button>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const sessionCodeField = document.getElementById('start_page_form_sessionCode');
+            const submitButton = document.getElementById('submit_button');
+            const revealModeContainer = document.getElementById('revealModeContainer');
+
+            sessionCodeField.addEventListener('input', function() {
+                if (sessionCodeField.value.trim() !== '') {
+                    submitButton.textContent = 'Beitreten';
+                    revealModeContainer.style.display = 'none';
+                } else {
+                    submitButton.textContent = 'Neue Session Starten';
+                    revealModeContainer.style.display = 'block';
+                }
+            });
+        });
+    </script>
+{% endblock %}

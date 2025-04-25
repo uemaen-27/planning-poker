@@ -1,0 +1,14 @@
+<IfModule mod_rewrite.c>
+# Testanweisung
+RewriteEngine On
+RewriteRule ^test-check$ - [L]
+    RewriteEngine On
+
+    # Statische Ressourcen ausnehmen
+    RewriteCond %{REQUEST_URI} !\.(css|js|png|jpg|jpeg|gif|ico|woff|woff2|ttf|svg)$ [NC]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # Alle anderen Anfragen auf index.php umleiten
+    RewriteRule ^ index.php [L]
+</IfModule>

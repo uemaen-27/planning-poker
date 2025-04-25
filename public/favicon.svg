@@ -1,0 +1,17 @@
+﻿<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Hintergrund -->
+  <rect width="64" height="64" rx="8" ry="8" fill="#2c3e50" />
+
+  <!-- Pokerkarte -->
+  <rect x="12" y="8" width="40" height="48" rx="4" ry="4" fill="#ecf0f1" stroke="#34495e" stroke-width="2"/>
+  <text x="22" y="24" font-family="Arial" font-size="16" fill="#e74c3c" font-weight="bold">A</text>
+  <text x="30" y="45" font-family="Arial" font-size="16" fill="#e74c3c" font-weight="bold">♥</text>
+
+  <!-- Chip 1 -->
+  <circle cx="48" cy="52" r="6" fill="#e74c3c"/>
+  <circle cx="48" cy="52" r="3" fill="#ffffff"/>
+
+  <!-- Chip 2 -->
+  <circle cx="40" cy="52" r="6" fill="#3498db"/>
+  <circle cx="40" cy="52" r="3" fill="#ffffff"/>
+</svg>

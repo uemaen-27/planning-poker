@@ -1,0 +1,168 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Session Seite{% endblock %}
+
+{% block body %}
+<div class="container-fluid vh-100 d-flex flex-column">
+    <div class="row flex-grow-1">
+        <!-- Linker Bereich: Benutzerliste -->
+        <div class="col-md-2 d-flex">
+            <div class="card flex-grow-1">
+                <div class="card-header">
+                    <h4>Benutzer: {{ app.user.username | default('Unbekannt') }}</h4>
+                    <h4>Session Key: {{ session.sessionKey | default('') }}</h4>
+                </div>
+                <div class="card-body overflow-auto">
+                    <ul class="list-group" id="participantList">
+                        {% for user in session.participants %}
+                            <li class="list-group-item d-flex align-items-center justify-content-between">
+                                <span class="username">{{ user.username | default('Unbekannt') }}&nbsp;</span>
+                                {% if currentPbi is not null %}
+                                {% set participantEstimate = user.estimates | filter(e => e.productBacklogItem.id == currentPbi.id) | first %}
+                                <div class="estimate-card-sm ml-2">
+                                    {% if participantEstimate %}
+                                        {% if participantEstimate.revealed %}
+                                            {{ participantEstimate.value }}
+                                        {% else %}
+                                            ???
+                                        {% endif %}
+                                    {% else %}
+                                       &nbsp;
+                                    {% endif %}
+                                </div>&nbsp;
+                                {% endif %}
+                                {% if is_host %}
+                                    <form method="post" action="{{ path('remove_user', { 'sessionKey': session.sessionKey, 'userId': user.id }) }}" class="d-inline ml-auto">
+                                        <button type="submit" class="btn btn-danger btn-sm">X</button>
+                                    </form>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            <li class="list-group-item">Keine Benutzer in der Sitzung.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% if is_host %}
+                <div class="card-footer">
+                    <form method="post" action="{{ path('reveal_estimates', { 'sessionKey': session.sessionKey }) }}">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">Karten aufdecken</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Mittlerer Bereich: Aktuelles Product Backlog Item -->
+        <div class="col-md-8 d-flex">
+            <div class="card flex-grow-1">
+                <div class="card-header">
+                    <h4>Aktuelles Product Backlog Item</h4>
+                </div>
+                <div class="card-body overflow-auto">
+                    <span id="currentPbi"> <!-- Hier das ID hinzufügen -->
+                        {% if currentPbi %}
+                            <div class="card">
+                                <div class="card-header text-center">
+                                    <h5>{{ currentPbi.title }}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>{{ currentPbi.description }}</p>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                Kein aktives PBI.
+                            </div>
+                        {% endif %}
+                    </span>
+                </div>
+                <div id="currentPbiFooter" class="card-footer" class="d-flex justify-content-around mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Rechter Bereich: PBI-Liste -->
+        <div class="col-md-2 d-flex">
+            <div class="card flex-grow-1">
+                <div class="card-header">
+                    <h4>Product Backlog Items</h4>
+                    {% if is_host %}
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addPbiModal">PBI Hinzuf&uuml;gen</button>
+                    {% endif %}
+                </div>
+                <div class="card-body overflow-auto">
+                    <ul class="list-group" id="productBacklogList">
+                        {% for pbi in productBacklogItems %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ pbi.title | default('Unbekannt') }}
+                                {% if is_host %}
+                                    <a href="{{ path('activate_pbi', { 'sessionKey': session.sessionKey, 'pbiId': pbi.id }) }}" class="btn btn-info btn-sm">Sch&auml;tzen</a>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            <li class="list-group-item">Keine Product Backlog Items vorhanden.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unterer Bereich: Handkarten -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Deine Sch&auml;tzkarten</h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-around">
+                        {% for card in cards %}
+                            <div id="cardid_{{ card.value }}" class="estimate-card {% if currentEstimate == card.value %}selected{% endif %}" 
+                                 data-value="{{ card.value }}" 
+                                 onclick="chooseCard({{ card.value }}, '{{ session.sessionKey | default('') }}', '{{ currentPbi.id | default(null) }}')">
+                                {{ card.value }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal für PBI Hinzufügen -->
+    {% if is_host %}
+    <div class="modal fade" id="addPbiModal" tabindex="-1" aria-labelledby="addPbiModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addPbiModalLabel">PBI Hinzuf&uuml;gen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addPbiForm" method="post" action="{{ path('add_pbi', { 'sessionKey': session.sessionKey }) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('add_pbi') }}">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Titel</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Beschreibung</label>
+                            <textarea class="form-control" id="description" name="description" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">PBI Hinzuf&uuml;gen</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+<script>
+    window.csrfToken = "{{ csrf_token('select_card') }}";
+    window.sessionKey = "{{ session.sessionKey }}";
+    window.sessionDataUrl = "{{ path('session_data', { sessionKey: session.sessionKey }) }}";
+    window.startPageUrl = "{{ path('start_page') }}";
+    window.isHost = "{{is_host}}"
+</script>
+<script src="{{ asset('js/session.js')}}"></script>
+{% endblock %}
